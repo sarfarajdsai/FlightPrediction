@@ -16,11 +16,7 @@ Structure:
 6.  Sidebar Controls
 7.  Helper Function (Prediction Summary)
 8.  Cached Model Training Functions
-9.  Main Application Logic (Pages):
-    * Data Overview
-    * Price Analysis
-    * Model Performance Comparison
-    * Predict Price (UI Updated: Class default, Any option) # <-- Updated
+9.  Main Application Logic (Pages - Fixed SyntaxError) # <-- Updated
 10. Footer
 """
 
@@ -181,7 +177,7 @@ def run_model_comparison(_X_data, _y_data, _models, _preprocessor):
     progress_bar.progress(1.0, text="Comparison complete!")
     return pd.DataFrame(performance_results)
 
-# Removed get_simple_prediction_pipeline
+# Removed get_simple_prediction_pipeline function
 
 @st.cache_resource(show_spinner=False) # Hide spinner for cached function
 def get_prediction_models_dict(_df_full_data, _cat_features, _num_features):
@@ -245,7 +241,7 @@ def get_prediction_models_dict(_df_full_data, _cat_features, _num_features):
                 st.warning(f"Could not train {name} for prediction: {e}")
                 trained_pipelines[name] = None # Store None if training failed
 
-    # st.success("Prediction models ready!") # Removed for less noise
+    # st.success("Prediction models ready!") # Can remove this for less noise
     return trained_pipelines
 
 # --- Trigger Training of Prediction Models ---
@@ -294,7 +290,7 @@ if app_mode == "Data Overview":
         st.markdown("**Price Box Plot (Original ₹)**")
         fig_box = px.box(df_display, y='price', title=f"Spread of Prices ({class_filter})", labels={'price': 'Price (₹)'})
         st.plotly_chart(fig_box, use_container_width=True)
-    with st.expander("ℹ️ How to Read These Distribution Charts"): st.markdown("...")
+    with st.expander("ℹ️ How to Read These Distribution Charts"): st.markdown("...") # Explanation text kept
     st.markdown('</div>', unsafe_allow_html=True)
 
 # =============================================================================
@@ -308,21 +304,21 @@ elif app_mode == "Price Analysis":
     st.subheader("Airline vs. Price"); st.markdown("Comparing price distributions across airlines.")
     fig_airline_box = px.box(df_display, x='airline', y='price', color='airline', title="Price Distribution by Airline", labels={'airline': 'Airline', 'price': 'Price (₹)'})
     fig_airline_box.update_layout(xaxis_tickangle=-45); st.plotly_chart(fig_airline_box, use_container_width=True)
-    with st.expander("ℹ️ How to Read (Airline vs. Price)"): st.markdown("...")
+    with st.expander("ℹ️ How to Read (Airline vs. Price)"): st.markdown("...") # Explanation text kept
     st.markdown("---")
     # Chart 2: Airline Market Share
     st.subheader("Airline Market Share"); st.markdown("Percentage of flights operated by each airline.")
     airline_counts = df_display['airline'].value_counts().reset_index(); airline_counts.columns = ['airline', 'count']
     fig_airline_pie = px.pie(airline_counts, names='airline', values='count', title=f'Airline Market Share ({class_filter})', hole=0.3)
     fig_airline_pie.update_traces(textposition='inside', textinfo='percent+label'); st.plotly_chart(fig_airline_pie, use_container_width=True)
-    with st.expander("ℹ️ How to Read Pie Chart"): st.markdown("...")
+    with st.expander("ℹ️ How to Read Pie Chart"): st.markdown("...") # Explanation text kept
     st.markdown("---")
     # Chart 3: Days Left vs. Price
     st.subheader("Price vs. Booking Time")
     st.markdown("**Price vs. Days Before Departure**")
     fig_days_scatter = px.scatter(df_display, x='days_left', y='price', trendline='ols', trendline_color_override='red', title="Price vs. Days Left", labels={'days_left': 'Days Before Departure', 'price': 'Price (₹)'})
     st.plotly_chart(fig_days_scatter, use_container_width=True)
-    with st.expander("ℹ️ How to Read (Days Left vs. Price)"): st.markdown("...")
+    with st.expander("ℹ️ How to Read (Days Left vs. Price)"): st.markdown("...") # Explanation text kept
     st.markdown("---")
     # Chart 4: Correlation Heatmap
     st.subheader("Feature Correlation Heatmap"); st.markdown("Visualizes linear relationships..."); st.info("ℹ️ Note: Uses Label Encoding...")
@@ -335,7 +331,7 @@ elif app_mode == "Price Analysis":
             sns.heatmap(corr_matrix, annot=True, fmt='.2f', cmap='coolwarm', linewidths=.5, ax=ax_heatmap)
             plt.title('Correlation Matrix (incl. Price)', fontsize=16); st.pyplot(fig_heatmap)
         else: st.warning("No numerical features for heatmap.")
-        with st.expander("ℹ️ How to Read Heatmap"): st.markdown("...")
+        with st.expander("ℹ️ How to Read Heatmap"): st.markdown("...") # Explanation text kept
     except Exception as e: st.error(f"Could not generate heatmap: {e}")
     st.markdown('</div>', unsafe_allow_html=True)
 
@@ -355,7 +351,7 @@ elif app_mode == "Model Performance":
         'Gradient Boosting Regressor': GradientBoostingRegressor(n_estimators=50, max_depth=5, random_state=42)
     }
     # Data Prep using df_display
-    current_categorical_comp = categorical_columns_all.copy(); current_numerical_comp = numerical_columns_all.copy()
+    current_categorical_comp = categorical_columns_all.copy(); current_numerical_comp = numerical_columns_all.copy() # Use global lists (duration excluded)
     if class_filter != 'All Classes' and 'class' in current_categorical_comp: current_categorical_comp.remove('class')
     required_cols = current_categorical_comp + current_numerical_comp
     missing_cols = [col for col in required_cols if col not in df_display.columns]
@@ -383,7 +379,12 @@ elif app_mode == "Model Performance":
             if not plot_df.empty:
                  with col_chart1: st.markdown("**R² Score Comparison**"); fig_r2 = px.bar(plot_df, x='Model', y='R² (Scaled)', title='R² Score (Higher is Better)', color='R² (Scaled)', text_auto='.4f', color_continuous_scale='viridis'); min_r2_vis = max(0, plot_df['R² (Scaled)'].min() - 0.05) if pd.notna(plot_df['R² (Scaled)'].min()) else 0; max_r2_vis = min(1, plot_df['R² (Scaled)'].max() + 0.05) if pd.notna(plot_df['R² (Scaled)'].max()) else 1; fig_r2.update_layout(yaxis_range=[min_r2_vis ,max_r2_vis]); fig_r2.update_traces(textangle=0, textposition="outside"); st.plotly_chart(fig_r2, use_container_width=True)
                  with col_chart2: st.markdown("**RMSE Comparison**"); fig_rmse = px.bar(plot_df, x='Model', y='RMSE (Scaled)', title='RMSE (Lower is Better)', color='RMSE (Scaled)', text_auto='.4f', color_continuous_scale='plasma_r'); fig_rmse.update_traces(textangle=0, textposition="outside"); st.plotly_chart(fig_rmse, use_container_width=True)
-                 with st.expander("ℹ️ How to Read Comparison Charts"): st.markdown("...")
+                 # *** FIXED: Added explanation text ***
+                 with st.expander("ℹ️ How to Read Comparison Charts"):
+                     st.markdown("""
+                        * **R² Score:** How well model explains price variation (closer to 1 is better). RF/GB usually best.
+                        * **RMSE:** Average prediction error (scaled). Lower is better. Best models usually have lowest RMSE.
+                    """)
             else: st.warning("No valid results to display charts.")
         else: st.warning("Performance data not found.")
     else: st.info("Click 'Compare All Models' button.")
@@ -414,16 +415,19 @@ elif app_mode == "Predict Price":
         with col_form1:
             source_city = st.selectbox("Source City*", sorted(df_original['source_city'].unique()), key="pred_source", help="Mandatory: Select the departure city.")
             # *** UPDATED: 'Any' option for Airline ***
-            airline = st.selectbox("Airline", ["Any"] + sorted(df_original['airline'].unique()), key="pred_airline", help="Select 'Any' to use the typical airline for predictions.")
-             # *** UPDATED: 'Any' option for Stops ***
-            stops = st.selectbox("Stops", ["Any"] + sorted(df_original['stops'].unique(), key=lambda x: ("zero", "one", "two_or_more").index(x) if x != "Any" else -1), key="pred_stops", help="Select 'Any' to use the typical number of stops.")
+            airline = st.selectbox("Airline (Optional)", ["Any"] + sorted(df_original['airline'].unique()), key="pred_airline", help="Select 'Any' to use the typical airline.")
+            # *** UPDATED: 'Any' option for Stops ***
+            stops = st.selectbox("Stops (Optional)", ["Any"] + sorted(df_original['stops'].unique(), key=lambda x: ("zero", "one", "two_or_more").index(x) if x != "Any" else -1), key="pred_stops", help="Select 'Any' to use the typical number of stops.")
 
         with col_form2:
             destination_city = st.selectbox("Destination City*", sorted(df_original['destination_city'].unique()), key="pred_dest", help="Mandatory: Select the arrival city.")
             # *** UPDATED: Removed 'All', Default to 'Economy' ***
             class_options = sorted(df_original['class'].unique()) # Get available classes ('Economy', 'Business')
-            # Find the index of 'Economy' to set it as default
-            default_class_index = class_options.index('Economy') if 'Economy' in class_options else 0
+            try:
+                # Find the index of 'Economy' to set it as default
+                default_class_index = class_options.index('Economy')
+            except ValueError:
+                default_class_index = 0 # Fallback to first option if 'Economy' isn't present
             flight_class_input = st.selectbox("Class*", class_options, index=default_class_index, key="pred_class", help="Mandatory: Select the flight class.")
             days_left = st.slider("Days Before Departure", min_value=1, max_value=50, value=15, step=1, key="pred_days")
 
@@ -431,7 +435,7 @@ elif app_mode == "Predict Price":
             # Dropdown to select the prediction model
             available_models = {name: pipe for name, pipe in trained_prediction_pipelines.items() if pipe is not None}
             if not available_models:
-                 st.error("No prediction models available."); st.stop()
+                 st.error("No prediction models available."); st.stop() # Should be caught earlier, but safety check
             model_name_predict = st.selectbox( "Select Prediction Model*", list(available_models.keys()), key="pred_model_select", help="Mandatory: Choose the algorithm.")
             # Duration input removed from UI
 
@@ -453,7 +457,7 @@ elif app_mode == "Predict Price":
                     # Use defaults if user selected "Any"
                     input_airline = df_original['airline'].mode()[0] if airline == "Any" else airline
                     input_stops = df_original['stops'].mode()[0] if stops == "Any" else stops
-                    # Use the selected class directly
+                    # Use the selected class directly (no 'All' option anymore)
                     input_class = flight_class_input
 
                     input_dict = {
@@ -472,7 +476,15 @@ elif app_mode == "Predict Price":
                     # Select the correct feature columns needed by the model
                     # Use the lists defined globally (excluding duration)
                     input_cols = categorical_features_for_pred_model + numerical_features_for_pred_model
+                    # Ensure all required columns are present in the input_df before filtering
+                    for col in input_cols:
+                        if col not in input_df.columns:
+                            # This case should ideally not happen with the defaults, but as a fallback:
+                            input_df[col] = 0 # Or use mean/mode if appropriate
+                            st.warning(f"Input column '{col}' was missing, using default value. Prediction might be less accurate.")
+
                     input_df_filtered = input_df[input_cols]
+
 
                     # --- Select Trained Model and Predict ---
                     selected_pipeline = available_models[model_name_predict]
@@ -485,7 +497,7 @@ elif app_mode == "Predict Price":
                     st.success(f"### Predicted Flight Price ({model_name_predict}): **₹{predicted_price_real:,.2f}**")
 
                     # --- Display Input Summary (Removed) ---
-                    # display_prediction_summary(input_dict, title="Prediction Input Summary (including defaults)") # <-- Removed
+                    # display_prediction_summary(...) # Removed call
 
                     # --- Display Context & Confidence (Optional) ---
                     st.markdown("---"); st.subheader("Prediction Context")
@@ -497,7 +509,7 @@ elif app_mode == "Predict Price":
                         (df_original['airline'] == input_airline) &
                         (df_original['source_city'] == source_city) &
                         (df_original['destination_city'] == destination_city) &
-                        (df_original['class'] == compare_class) &
+                        (df_original['class'] == compare_class) & # Compare using the specific class used for prediction
                         (df_original['stops'] == input_stops) &
                         (df_original['days_left'].between(max(1, days_left - 3), days_left + 3))
                     )
@@ -507,8 +519,12 @@ elif app_mode == "Predict Price":
                     st.markdown("**Comparison with Similar Historical Flights:**")
                     if not similar_flights.empty:
                         similar_avg = similar_flights['price'].mean(); similar_min = similar_flights['price'].min(); similar_max = similar_flights['price'].max(); similar_count = len(similar_flights)
-                        st.markdown(f"* Found **{similar_count}** flights matching key criteria within +/- 3 days ({compare_class}).\n* **Observed Price Range:** ₹{similar_min:,.0f} - ₹{similar_max:,.0f}\n* **Observed Average Price:** ₹{similar_avg:,.0f}\n* **Your Prediction:** **₹{predicted_price_real:,.2f}**")
-                        with st.expander("ℹ️ How to Read Market Comparison"): st.markdown("...")
+                        st.markdown(f"* Found **{similar_count}** flights matching key criteria within +/- 3 days ({compare_class}).\n* **Observed Price Range:** ₹{similar_min:,.0f} - ₹{similar_max:,.0f}\n* **Observed Average Price:** ₹{similar_avg:,.0f}\n* **Your Prediction:** **₹{predicted_price_real:,.0f}**")
+                        # *** FIXED: Added explanation text ***
+                        with st.expander("ℹ️ How to Read Market Comparison"):
+                             st.markdown("""
+                                Compares prediction to actual prices of similar past flights. Is prediction within range? How does it compare to average?
+                            """)
                     else:
                         st.warning("No closely matching flights found in historical data.")
 
@@ -529,7 +545,7 @@ with st.expander("Show Implementation Notes"):
     * **Target Scaling:** `StandardScaler` applied to 'price' *before* training. Predictions inverse-transformed to ₹.
     * **Preprocessing:** `Pipeline` with `ColumnTransformer` (Numerical: `StandardScaler`, Categorical: `OneHotEncoder`). **Duration** feature excluded.
     * **Model Comparison:** Evaluates multiple models, ranked by R² (using filtered data).
-    * **Predict Price Page:** Trains multiple models (`LinearRegression`, `Ridge`, `Lasso`, `RandomForest`, `GradientBoosting`) on **All Classes** data (excluding duration). User selects model, inputs details (Source/Dest mandatory, others optional with defaults), and gets prediction in ₹. Class input defaults to 'Economy'. Airline/Stops have 'Any' option.
+    * **Predict Price Page:** Trains multiple models (`LinearRegression`, `Ridge`, `Lasso`, `RandomForest`, `GradientBoosting`) on **All Classes** data (excluding duration). User selects model, inputs details (Source/Dest mandatory, others optional with defaults), and gets prediction in ₹. Class input defaults to 'Economy'. Airline/Stops have 'Any' option. Prediction summary table removed.
     * **Model Caching:** Uses `@st.cache_resource` for pipelines, `@st.cache_data` for data/comparison results.
     * **UI:** Streamlit multi-page app with sidebar, Plotly charts, forms, CSS highlighting. UI spacing improved.
     """)
